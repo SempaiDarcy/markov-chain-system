@@ -7,19 +7,19 @@ class MarkovApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Моделирование Марковского процесса")
-        self.root.geometry("700x600")  # Размер окна приложения
+        self.root.geometry("700x600")
 
         # Создание вкладок
         self.tabs = ttk.Notebook(self.root)
         self.main_tab = tk.Frame(self.tabs)
-        self.data_tab = tk.Frame(self.tabs)  # Вкладка для отображения данных
-        self.manual_data_tab = tk.Frame(self.tabs)  # Новая вкладка для ручного ввода
+        self.data_tab = tk.Frame(self.tabs)
+        self.manual_data_tab = tk.Frame(self.tabs)
         self.tabs.add(self.main_tab, text="Главная")
         self.tabs.add(self.data_tab, text="Данные")
-        self.tabs.add(self.manual_data_tab, text="Ручной ввод")  # Добавление вкладки для ручного ввода
+        self.tabs.add(self.manual_data_tab, text="Ручной ввод")
         self.tabs.pack(expand=1, fill="both")
 
-        # Окно ввода
+        # Окно ввода на вкладке "Главная"
         self.input_frame = tk.Frame(self.main_tab)
         self.input_frame.pack(pady=10)
 
@@ -31,28 +31,79 @@ class MarkovApp:
         self.tacts_entry = tk.Entry(self.input_frame, font=("Arial", 14), width=5)
         self.tacts_entry.grid(row=1, column=1)
 
+        # Кнопка генерации случайных данных
+        self.generate_button = tk.Button(self.input_frame, text="Сгенерировать случайные данные", font=("Arial", 14),
+                                         command=self.generate_random)
+        self.generate_button.grid(row=2, columnspan=2)
+
         # Кнопка для ручного ввода данных
         self.manual_input_button = tk.Button(self.input_frame, text="Ручной ввод данных", font=("Arial", 14),
                                              command=self.show_manual_input)
-        self.manual_input_button.grid(row=2, columnspan=2)
+        self.manual_input_button.grid(row=3, columnspan=2)
 
-        # Сообщение об ошибке на вкладке "Ручной ввод"
-        self.manual_error_message = tk.Label(self.manual_data_tab, text="", fg="red", font=("Arial", 14))
-        self.manual_error_message.pack()
+        # Поле для вывода данных
+        self.result_frame = tk.Frame(self.data_tab)
+        self.result_frame.pack(pady=10)
 
-    def show_manual_input(self):
-        """Переход на вкладку ручного ввода данных"""
+    def generate_random(self):
+        """Функция для генерации случайных данных"""
         size = int(self.size_entry.get())
-
         if size <= 0:
-            self.manual_error_message.config(text="Размерность матрицы должна быть больше 0.")
             return
 
-        # Очищаем предыдущие виджеты на вкладке для ручного ввода
+        # Генерация случайного вектора начальных вероятностей
+        initial_prob_vector = self.generate_probabilities(size)
+
+        # Генерация случайной матрицы переходов
+        transition_matrix = np.array([self.generate_probabilities(size) for _ in range(size)])
+
+        # Генерация вектора трудоемкостей
+        cost_vector = np.random.choice([100, 200, 300, 250, 150], size=size)
+
+        # Отображаем сгенерированные данные на вкладке "Данные"
+        self.display_generated_data(initial_prob_vector, transition_matrix, cost_vector)
+
+    def generate_probabilities(self, size):
+        """Генерация нормализованных вероятностей"""
+        values = np.random.choice(np.arange(0.0, 1.1, 0.1), size=size, replace=True)
+        values = np.round(values, 2)
+        return values / values.sum()
+
+    def display_generated_data(self, initial_prob, transition_matrix, cost_vector):
+        """Отображение сгенерированных данных на вкладке 'Данные'"""
+
+        # Очищаем результат предыдущих данных
+        for widget in self.result_frame.winfo_children():
+            widget.destroy()
+
+        # Начальные вероятности
+        tk.Label(self.result_frame, text="Начальный вектор вероятностей:", font=("Arial", 14)).pack()
+        for i, prob in enumerate(initial_prob):
+            tk.Label(self.result_frame, text=f"P{i+1}: {prob:.2f}", font=("Arial", 12)).pack()
+
+        # Матрица переходов
+        tk.Label(self.result_frame, text="Матрица переходов:", font=("Arial", 14)).pack()
+        for row in transition_matrix:
+            row_text = " ".join(f"{val:.2f}" for val in row)
+            tk.Label(self.result_frame, text=row_text, font=("Arial", 12)).pack()
+
+        # Вектор трудоемкостей
+        tk.Label(self.result_frame, text="Вектор трудоемкости:", font=("Arial", 14)).pack()
+        cost_text = " ".join(f"{cost}" for cost in cost_vector)
+        tk.Label(self.result_frame, text=cost_text, font=("Arial", 12)).pack()
+
+        self.tabs.select(self.data_tab)  # Переход на вкладку "Данные"
+
+    def show_manual_input(self):
+        """Переход на вкладку 'Ручной ввод данных'"""
+        size = int(self.size_entry.get())
+        if size <= 0:
+            return
+
+        # Очищаем вкладку "Ручной ввод" перед добавлением новых элементов
         for widget in self.manual_data_tab.winfo_children():
             widget.destroy()
 
-        # Окно для ручного ввода данных
         self.manual_input_frame = tk.Frame(self.manual_data_tab)
         self.manual_input_frame.pack(pady=10)
 
@@ -88,11 +139,14 @@ class MarkovApp:
                                        command=self.process_manual_input)
         self.submit_button.grid(row=size+5, columnspan=size)
 
+        # Переход на вкладку "Ручной ввод"
+        self.tabs.select(self.manual_data_tab)
+
     def process_manual_input(self):
         """Обработка введённых вручную данных"""
-        try:
-            size = int(self.size_entry.get())
+        size = int(self.size_entry.get())
 
+        try:
             # Считывание начальных вероятностей
             initial_prob_vector = np.array([float(entry.get()) for entry in self.manual_prob_entries])
             if not np.isclose(initial_prob_vector.sum(), 1.0):
@@ -113,7 +167,7 @@ class MarkovApp:
             print(f"Вектор трудоемкости: {cost_vector}")
 
         except ValueError as e:
-            self.manual_error_message.config(text=f"Ошибка: {str(e)}")
+            print(f"Ошибка ввода: {str(e)}")
 
 
 # Основная программа для запуска приложения
