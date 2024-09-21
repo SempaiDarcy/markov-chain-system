@@ -21,6 +21,9 @@ class MarkovApp:
         self.tabs.add(self.manual_data_tab, text="Ручной ввод")  # Добавление вкладки для ручного ввода
         self.tabs.pack(expand=1, fill="both")
 
+        # Заблокировать вкладку ручного ввода
+        self.tabs.tab(self.manual_data_tab, state='disabled')
+
         # Инициализация переменных
         self.size = tk.IntVar()
         self.tacts = tk.IntVar()
@@ -81,6 +84,9 @@ class MarkovApp:
         if size <= 0:
             self.error_message.config(text="Размерность матрицы должна быть больше 0.")
             return
+
+        # Разблокировать вкладку ручного ввода
+        self.tabs.tab(self.manual_data_tab, state='normal')
 
         # Очищаем предыдущие виджеты на вкладке для ручного ввода
         for widget in self.manual_data_tab.winfo_children():
