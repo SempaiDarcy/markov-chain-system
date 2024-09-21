@@ -9,7 +9,7 @@ class MarkovApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Моделирование Марковского процесса")
-        self.root.geometry("700x600")
+        self.root.geometry("900x700")  # Изменение размера окна для лучшего отображения
 
         # Создание вкладок
         self.tabs = ttk.Notebook(self.root)
@@ -21,8 +21,9 @@ class MarkovApp:
         self.tabs.add(self.manual_data_tab, text="Ручной ввод")  # Добавление вкладки для ручного ввода
         self.tabs.pack(expand=1, fill="both")
 
-        # Заблокировать вкладку ручного ввода
+        # Заблокировать вкладки "Ручной ввод" и "Данные"
         self.tabs.tab(self.manual_data_tab, state='disabled')
+        self.tabs.tab(self.data_tab, state='disabled')
 
         # Инициализация переменных
         self.size = tk.IntVar()
@@ -183,6 +184,7 @@ class MarkovApp:
             self.show_graph_button.config(state=tk.NORMAL)
             self.error_message.config(text="")
             self.manual_error_message.config(text="")  # Очищаем ошибку на вкладке ручного ввода
+            self.tabs.tab(self.data_tab, state='normal')  # Разблокируем вкладку "Данные"
             self.tabs.select(self.data_tab)
 
         except ValueError as e:
@@ -213,6 +215,7 @@ class MarkovApp:
             self.calculate_button.config(state=tk.NORMAL)
             self.show_graph_button.config(state=tk.NORMAL)  # Активируем кнопку графа переходов
             self.error_message.config(text="")
+            self.tabs.tab(self.data_tab, state='normal')  # Разблокируем вкладку "Данные"
             self.tabs.select(self.data_tab)  # Переключаемся на вкладку "Данные" после генерации
 
         except ValueError as e:
@@ -247,6 +250,7 @@ class MarkovApp:
         self.calculate_button.config(state=tk.NORMAL)
         self.show_graph_button.config(state=tk.NORMAL)
         self.error_message.config(text="")
+        self.tabs.tab(self.data_tab, state='normal')  # Разблокируем вкладку "Данные"
         self.tabs.select(self.data_tab)
 
     def generate_probabilities(self, size):
@@ -269,8 +273,11 @@ class MarkovApp:
         # Разделитель
         tk.Label(self.data_tab, text="-"*50, font=("Arial", 14)).pack(pady=10)
 
+        # Заголовок над матрицей переходов
+        tk.Label(self.data_tab, text="Матрица переходов:", font=("Arial", 14)).pack(pady=10)
+
         # Используем Text для выравнивания чисел матрицы
-        text_widget = tk.Text(self.data_tab, height=10, width=30, font=("Arial", 12))
+        text_widget = tk.Text(self.data_tab, height=10, width=70, font=("Arial", 12))  # Увеличена ширина для корректного отображения
         text_widget.pack()
 
         # Форматирование строк матрицы
